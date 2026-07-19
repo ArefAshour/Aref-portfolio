@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>البشمهندس عارف عاشور | المختبر الرقمي</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght=400;500;700&family=Tajawal:wght=400;500;700;900&display=swap');
+
+        :root {
+            --bg-base: #020617;
+            --bg-surface: #0f172a;
+            --bg-island: #1e293b;
+            --primary: #10b981;
+            --primary-glow: rgba(16, 185, 129, 0.15);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dark: #64748b;
+            --font-sans: 'Tajawal', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* شاشة الـ Booting والترحيب */
+        .boot-container {
+            width: 100%;
+            max-width: 750px;
+            background-color: var(--bg-surface);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px var(--primary-glow);
+            padding: 30px;
+            transition: var(--transition-smooth);
+        }
+
+        .window-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .window-dots { display: flex; gap: 8px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot-r { background-color: #ef4444; }
+        .dot-y { background-color: #eab308; }
+        .dot-g { background-color: #10b981; }
+
+        .window-title {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dark);
+        }
+
+        .terminal-lines {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--primary);
+            min-height: 160px;
+        }
+
+        .terminal-lines p {
+            margin-bottom: 12px;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .terminal-lines p.visible { opacity: 1; transform: translateY(0); }
+
+        .welcome-msg {
+            color: var(--text-main);
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 20px;
+        }
+
+        .welcome-msg span.highlight {
+            color: var(--primary);
+            font-size: 26px;
+            font-weight: 900;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 20px;
+            background-color: var(--primary);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+        .boot-action-zone {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            opacity: 0;
+            transition: var(--transition-smooth);
+        }
+
+        .boot-action-zone.visible { opacity: 1; }
+        .tip-text { font-size: 12px; color: var(--text-muted); max-width: 70%; }
+
+        .action-btn {
+            background-color: var(--primary);
+            color: #020617;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            transition: var(--transition-smooth);
+        }
+
+        .action-btn:hover { background-color: #34d399; transform: translateY(-2px); }
+
+        /* واجهة الموقع الرئيسية */
+        .main-lab-layout {
+            display: none;
+            width: 100%;
+            max-width: 1100px;
+            grid-template-columns: 4fr 8fr;
+            gap: 25px;
+            opacity: 0;
+            transform: scale(0.96);
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .main-lab-layout.activated { opacity: 1; transform: scale(1); }
+
+        .sidebar-card {
+            background-color: var(--bg-surface);
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: fit-content;
+        }
+
+        .profile-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* حاوية الصورة الشخصية المحدثة لضمان الاحتواء الكامل والقص الدائري النظيف */
+        .avatar-box {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 12px var(--primary-glow);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(16, 185, 129, 0.1);
+            flex-shrink: 0; /* يمنع الصورة من الانضغاط أو التشويه */
+        }
+
+        .avatar-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top; /* يضمن إظهار ملامح الوجه بشكل ممتاز */
+        }
+
+        .brand-meta h2 { font-size: 16px; font-weight: 700; }
+        .brand-meta p { font-family: var(--font-mono); font-size: 11px; color: var(--primary); }
+        .profile-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 25px; text-align: justify; }
+        .navigation-links { display: flex; flex-direction: column; gap: 10px; }
+
+        .nav-tab-btn {
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid #1e293b;
+            color: var(--text-muted);
+            padding: 14px 18px;
+            border-radius: 10px;
+            text-align: right;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition-smooth);
+        }
+
+        .nav-tab-btn:hover { border-color: #334155; color: var(--text-main); transform: translateX(-4px); }
+        .nav-tab-btn.active { background-color: var(--primary-glow); border-color: rgba(16, 185, 129, 0.3); color: var(--primary); font-weight: 700; }
+
+        .sidebar-footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #1e293b;
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dark);
+        }
+
+        /* لوحة العرض المركزية */
+        .viewport-card {
+            background-color: var(--bg-surface);
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 520px;
+        }
+
+        .section-loader {
+            display: none;
+            width: 100%;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--primary);
+        }
+
+        .section-loader p { margin-bottom: 12px; opacity: 0; transform: translateY(4px); }
+        .section-loader p.pop { animation: subBoot 0.25s forwards ease; }
+        @keyframes subBoot { to { opacity: 1; transform: translateY(0); } }
+
+        .tab-content-block { display: none; width: 100%; }
+        .tab-content-block.active-block { display: block; animation: fadeEffect 0.4s ease; }
+        @keyframes fadeEffect { from { opacity: 0; transform: scale(0.99); } to { opacity: 1; transform: scale(1); } }
+
+        .section-title-wrap { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 15px; margin-bottom: 25px; }
+        .title-accent { width: 4px; height: 24px; background-color: var(--primary); border-radius: 4px; }
+        .section-title-wrap h3 { font-size: 18px; font-weight: 700; }
+
+        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .info-card { background-color: rgba(2, 6, 23, 0.4); border: 1px solid #1e293b; border-radius: 12px; padding: 20px; transition: var(--transition-smooth); display: flex; flex-direction: column; justify-content: space-between; }
+        .info-card:hover { border-color: rgba(16, 185, 129, 0.2); transform: translateY(-3px); }
+        
+        .project-img-wrapper {
+            width: 100%;
+            height: 160px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border: 1px solid #1e293b;
+            background-color: var(--bg-base);
+        }
+        .project-img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition-smooth); }
+        .info-card:hover .project-img { transform: scale(1.05); }
+
+        .card-icon-svg { color: var(--primary); margin-bottom: 12px; display: block; }
+        .info-card h4 { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; }
+        .info-card p { font-size: 12px; color: var(--text-muted); text-align: justify; margin-bottom: 15px; flex-grow: 1; }
+
+        .project-link-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background-color: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: var(--transition-smooth);
+            margin-top: auto;
+        }
+        .project-link-btn:hover { background-color: var(--primary); color: #020617; border-color: var(--primary); }
+
+        .quote-block { background-color: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.08); border-right: 3px solid var(--primary); padding: 20px; border-radius: 8px; margin-top: 25px; }
+        .quote-block h5 { color: var(--primary); font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+        .quote-block p { font-size: 13px; color: #cbd5e1; font-style: italic; }
+
+        /* المهارات */
+        .skills-container { display: flex; flex-direction: column; gap: 20px; }
+        .skill-row { display: flex; flex-direction: column; gap: 6px; }
+        .skill-meta { display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; }
+        .skill-bar-bg { width: 100%; height: 8px; background-color: var(--bg-base); border: 1px solid #1e293b; border-radius: 20px; overflow: hidden; padding: 1px; }
+        .skill-bar-fill { height: 100%; background: linear-gradient(90deg, #06b6d4, #10b981); border-radius: 20px; width: 0%; transition: width 1.2s cubic-bezier(0.1, 1, 0.1, 1); }
+        .badge-row { display: flex; gap: 10px; margin-top: 25px; flex-wrap: wrap; }
+        .tag-badge { background-color: rgba(30, 41, 59, 0.5); border: 1px solid #334155; padding: 8px 16px; font-size: 11px; border-radius: 6px; color: var(--text-muted); }
+
+        .project-meta-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .proj-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 8px; background-color: rgba(6, 182, 212, 0.1); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 4px; }
+        .proj-tech-stack { display: flex; gap: 8px; margin-top: 15px; font-family: var(--font-mono); font-size: 10px; color: var(--text-dark); }
+
+        @media (max-width: 768px) { 
+            body { padding: 12px; align-items: flex-start; } 
+            .main-lab-layout { grid-template-columns: 1fr; } 
+            .cards-grid { grid-template-columns: 1fr; } 
+            .viewport-card { padding: 20px; min-height: auto; } 
+        }
+    </style>
+</head>
+<body>
+
+    <!-- [1] شاشة الـ Booting الترحيبية الأولى -->
+    <div id="boot-box" class="boot-container">
+        <div class="window-header">
+            <div class="window-dots">
+                <div class="dot dot-r"></div>
+                <div class="dot dot-y"></div>
+                <div class="dot dot-g"></div>
+            </div>
+            <div class="window-title">aref_core_system_v3.0.sh</div>
+            <div style="width: 32px;"></div>
+        </div>
+
+        <div class="terminal-lines">
+            <p id="b1">> INITIALIZING EDTECH & DEVELOPMENT CORE SYSTEM...</p>
+            <p id="b2">> LOADING KNOWLEDGE BASE & LEARNING FRAMEWORKS... [OK]</p>
+            <p id="b3">> ESTABLISHING GAMIFIED USER INTERFACE ENVIRONMENT... [READY]</p>
+            <div id="b4" class="welcome-msg" style="opacity: 0; transform: translateY(5px); transition: opacity 0.5s ease, transform 0.5s ease;">
+                مرحباً بك في الفضاء الرقمي للمهندس
+                <span class="highlight">عارف عاشور <span class="cursor"></span></span>
+            </div>
+        </div>
+
+        <div id="b-action" class="boot-action-zone">
+            <div class="tip-text">💡 اضغط على الزر أدناه لفك شفرة المختبر واستكشاف الرؤية والمشاريع التفاعلية.</div>
+            <button onclick="activateMainLab()" class="action-btn">تفعيل بروتوكول الدخول</button>
+        </div>
+    </div>
+
+    <!-- [2] واجهة البورتفوليو والمنصة الرئيسية -->
+    <div id="main-lab" class="main-lab-layout">
+        
+        <!-- القائمة الجانبية -->
+        <div class="sidebar-card">
+            <div>
+                <div class="profile-brand">
+                    <!-- تعديل مسار الصورة ليكون أبسط -->
+                    <div class="avatar-box">
+                        <img src="c:\Users\aref1\Pictures\Gemini_Generated_Image_9jsup19jsup19jsu.png" alt="عارف عاشور">
+                    </div>
+                    <div class="brand-meta">
+                        <h2>بشمهندس عارف عاشور</h2>
+                        <p>EdTech Developer & Programmer</p>
+                    </div>
+                </div>
+
+                <p class="profile-desc">
+                    أعمل على دمج استراتيجيات تكنولوجيا التعليم الحديثة مع تقنيات البرمجة المتقدمة، لتقديم تجارب رقمية تفاعلية تتجاوز المألوف وتدعم بيئات التعلم النشط والفعال.
+                </p>
+
+                <div class="navigation-links">
+                    <button onclick="triggerSectionLoader('about')" id="tab-link-about" class="nav-tab-btn active">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span>الملف الشخصي والرؤية</span>
+                    </button>
+                    <button onclick="triggerSectionLoader('skills')" id="tab-link-skills" class="nav-tab-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                        <span>ترسانة المهارات والتقنيات</span>
+                    </button>
+                    <button onclick="triggerSectionLoader('projects')" id="tab-link-projects" class="nav-tab-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                        <span>المشاريع والمختبرات الحية</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <span>STATUS: ACTIVE</span>
+                <span>SECURE_NODE // 2026</span>
+            </div>
+        </div>
+
+        <!-- لوحة العرض المركزية للتفاعل وعرض المشاريع -->
+        <div class="viewport-card">
+            
+            <div id="section-loader-screen" class="section-loader">
+                <p id="sl-1"></p>
+                <p id="sl-2"></p>
+                <p id="sl-3"></p>
+            </div>
+            
+            <!-- القسم الأول: الرؤية والملف -->
+            <div id="block-about" class="tab-content-block active-block">
+                <div class="section-title-wrap">
+                    <div class="title-accent"></div>
+                    <h3>رؤية مبتكرة في تكنولوجيا التعليم</h3>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(249, 252, 251, 0.08), rgba(6, 182, 212, 0.04)); border: 1px dashed rgba(16, 185, 129, 0.25); padding: 22px; border-radius: 12px; text-align: center; margin-bottom: 25px;">
+                    <p style="font-size: 11px; color: var(--text-dark); font-family: var(--font-mono); margin-bottom: 6px;">// CURRENT_MOTTO</p>
+                    <h4 style="font-size: 23px; font-weight: 900; color: var(--primary); text-shadow: 0 0 12px rgba(16, 185, 129, 0.15);">
+                        الأفضل لم يأتِ بعد.
+                    </h4>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="info-card">
+                        <svg class="card-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
+                        <h4>التلعيب والتعليم النشط</h4>
+                        <p>تحويل المناهج الأكاديمية والتدريبية الجامدة إلى مسارات مبنية على التحديات والجوائز لرفع مستويات الاستيعاب والشغف بالتعلم الفردي والجماعي.</p>
+                    </div>
+                    <div class="info-card">
+                        <svg class="card-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        <h4>هندسة البرمجيات التعليمية</h4>
+                        <p>بناء أدوات رقمية متقدمة، ومنصات غامرة، مع واجهات مستخدم معززة وخفيفة تسهل انسياب الأكواد البرمجية وتبسيط العلوم المعقدة.</p>
+                    </div>
+                </div>
+                <div class="quote-block">
+                    <h5>فلسفة التطوير الشخصية</h5>
+                    <p>"التعليم لا يدور حول ملء وعاء, بل إشعال نار ملوّنة بالشغف. والبرمجة هي الأداة الأقوى المتاحة اليوم لصناعة تلك الشرارة وتحويل المعرفة النظرية إلى تجارب بصرية حية يستوعبها أي عقل."</p>
+                </div>
+            </div>
+
+            <!-- القسم الثاني: المهارات المتقدمة -->
+            <div id="block-skills" class="tab-content-block">
+                <div class="section-title-wrap">
+                    <div class="title-accent"></div>
+                    <h3>ترسانة المهارات والخبرات التقنية</h3>
+                </div>
+                <div class="skills-container">
+                    <div class="skill-row">
+                        <div class="skill-meta">
+                            <span>تطوير الواجهات والويب التفاعلي (HTML, CSS, JS)</span>
+                            <span style="color: var(--primary); font-family: var(--font-mono);">95%</span>
+                        </div>
+                        <div class="skill-bar-bg">
+                            <div id="bar-web" class="skill-bar-fill"></div>
+                        </div>
+                    </div>
+                    <div class="skill-row">
+                        <div class="skill-meta">
+                            <span>برمجة الأنظمة ومعالجة البيانات (Python & Scripting)</span>
+                            <span style="color: var(--primary); font-family: var(--font-mono);">90%</span>
+                        </div>
+                        <div class="skill-bar-bg">
+                            <div id="bar-py" class="skill-bar-fill"></div>
+                        </div>
+                    </div>
+                    <div class="skill-row">
+                        <div class="skill-meta">
+                            <span>بناء بيئات التلعيب والتعليم النشط (Gamification Strategy)</span>
+                            <span style="color: var(--primary); font-family: var(--font-mono);">85%</span>
+                        </div>
+                        <div class="skill-bar-bg">
+                            <div id="bar-ed" class="skill-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="badge-row">
+                    <span class="tag-badge">Responsive Design</span>
+                    <span class="tag-badge">Clean Code</span>
+                    <span class="tag-badge">UI/UX Layouts</span>
+                </div>
+            </div>
+
+            <!-- القسم الثالث: كروت مشاريعك الحية -->
+            <div id="block-projects" class="tab-content-block">
+                <div class="section-title-wrap">
+                    <div class="title-accent"></div>
+                    <h3>المختبر البرمجي والمشاريع المبتكرة</h3>
+                </div>
+                <div class="cards-grid">
+                    
+                    <div class="info-card">
+                        <div class="project-meta-info">
+                            <span class="proj-label">AI Visual Lab</span>
+                        </div>
+                        <div class="project-img-wrapper">
+                            <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=500&q=80" alt="AI Photo Editor" class="project-img">
+                        </div>
+                        <h4>(v0)الموقع الاول</h4>
+                        <p>تطبيق معالجة بصري ذكي يتيح تحسين وتعديل الصور وبناء واجهات الـ Terminal المعززة لتجربة رقمية غامرة.</p>
+                        
+                        <a href="https://v0-arefashour.vercel.app/" target="_blank" class="project-link-btn">
+                            <span>زيارة المنصة الحية V0 🚀</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                        <div class="proj-tech-stack"><span>#Python</span> <span>#AI_Models</span> <span>#V0_Deploy</span></div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="project-meta-info">
+                            <span class="proj-label">Gamified System</span>
+                        </div>
+                        <div class="project-img-wrapper">
+                            <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&q=80" alt="Bolt Dashboard Hub" class="project-img">
+                        </div>
+                        <h4>نظام البورتفوليو الحركي (Bolt)</h4>
+                        <p>بنية تحتية لملف شخصي تفاعلي يعتمد على الرسوم والبيانات الحية ومؤشرات الأداء السلسة الداعمة لتكنولوجيا التعليم.</p>
+                        
+                        <a href="https://aref-ashour-portfoli-73rl.bolt.host/#" target="_blank" class="project-link-btn">
+                            <span>زيارة محاكي Bolt النشط ✨</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                        <div class="proj-tech-stack"><span>#React</span> <span>#Vite_Env</span> <span>#Bolt_Host</span></div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(() => { document.getElementById('b1').classList.add('visible'); }, 400);
+            setTimeout(() => { document.getElementById('b2').classList.add('visible'); }, 1100);
+            setTimeout(() => { document.getElementById('b3').classList.add('visible'); }, 1800);
+            setTimeout(() => { 
+                const welcome = document.getElementById('b4');
+                welcome.style.opacity = "1"; welcome.style.transform = "translateY(0)";
+            }, 2500);
+            setTimeout(() => { document.getElementById('b-action').classList.add('visible'); }, 3200);
+        });
+
+        function activateMainLab() {
+            const bootBox = document.getElementById('boot-box');
+            const mainLab = document.getElementById('main-lab');
+            bootBox.style.transform = "scale(0.95)"; bootBox.style.opacity = "0";
+            setTimeout(() => {
+                bootBox.style.display = "none"; 
+                mainLab.style.display = "grid"; 
+                setTimeout(() => { mainLab.classList.add('activated'); }, 50);
+            }, 500);
+        }
+
+        const loaderTexts = {
+            about: [
+                "> جاري استدعاء مصفوفة الرؤية والبيانات الشخصية...",
+                "> تحليل فلسفة التطوير التكنولوجي... [تم بنجاح]",
+                "> تهيئة بيئة العرض التفاعلي... [جاهز]"
+            ],
+            skills: [
+                "> جاري فحص ترسانة التقنيات ولغات البرمجة الحالية...",
+                "> قياس مستويات الخبرة البرمجية وقواعد البيانات... [تم]",
+                "> بناء المؤشرات الرسومية لأشرطة التقدم... [جاهز]"
+            ],
+            projects: [
+                "> جاري مراجعة سجل المختبر واستخراج ملفات المشاريع...",
+                "> فحص روابط المعاينة الحية المدمجة... [100%]",
+                "> ترتيب الكروت البرمجية الغامرة والصور... [جاهز]"
+            ]
+        };
+
+        function triggerSectionLoader(tabName) {
+            const buttons = document.querySelectorAll('.nav-tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-link-' + tabName).classList.add('active');
+
+            const blocks = document.querySelectorAll('.tab-content-block');
+            blocks.forEach(block => block.classList.remove('active-block'));
+
+            const loaderScreen = document.getElementById('section-loader-screen');
+            const p1 = document.getElementById('sl-1');
+            const p2 = document.getElementById('sl-2');
+            const p3 = document.getElementById('sl-3');
+
+            p1.className = p2.className = p3.className = '';
+            p1.innerText = loaderTexts[tabName][0];
+            p2.innerText = loaderTexts[tabName][1];
+            p3.innerText = loaderTexts[tabName][2];
+
+            loaderScreen.style.display = 'block';
+
+            setTimeout(() => p1.classList.add('pop'), 100);
+            setTimeout(() => p2.classList.add('pop'), 350);
+            setTimeout(() => p3.classList.add('pop'), 600);
+
+            setTimeout(() => {
+                loaderScreen.style.display = 'none';
+                displayTargetSection(tabName);
+            }, 900);
+        }
+
+        function displayTargetSection(tabName) {
+            document.getElementById('block-' + tabName).classList.add('active-block');
+
+            if (tabName === 'skills') {
+                setTimeout(() => {
+                    document.getElementById('bar-web').style.width = '95%';
+                    document.getElementById('bar-py').style.width = '90%';
+                    document.getElementById('bar-ed').style.width = '85%';
+                }, 50);
+            } else {
+                const barWeb = document.getElementById('bar-web');
+                const barPy = document.getElementById('bar-py');
+                const barEd = document.getElementById('bar-ed');
+                if(barWeb && barPy && barEd) {
+                    barWeb.style.width = barPy.style.width = barEd.style.width = '0%';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
